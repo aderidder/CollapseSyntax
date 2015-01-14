@@ -1,0 +1,6 @@
+# Ignore iml files and this file
+*.iml
+#exclude .idea directory
+/.idea
+/META-INF
+/CollapseSyntax/*.iml
