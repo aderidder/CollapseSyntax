@@ -352,7 +352,7 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 
 	// main
 	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(() -> createAndShowGUI());
+		javax.swing.SwingUtilities.invokeLater(CollapseSyntaxGUI::createAndShowGUI);
 	}
 
 	private String dir="";
@@ -364,6 +364,6 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 	private static final String newline = Common.getNewLine();
 	private static final String fileSeparator = System.getProperty("file.separator");
 //	private static final long serialVersionUID = -7755429999545798394L;
-	private static final double version = 0.9;
+	private static final double version = 1.0;
 }
 
