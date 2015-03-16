@@ -252,12 +252,14 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 			// ensure the directory variable is set properly 
 			dir = dataFile.substring(0,dataFile.lastIndexOf(fileSeparator));
 			try{
+				// create a Data object, read the file and generate the dataFile
 				Data data = new Data(dataFile);
 				data.readDataFile();
 				data.generateDataFile();
 				
 				logArea.append(newline);
-				
+
+				// create the itemDefs and generate a new syntaxfile based on the new header (with CF items)
 				ItemDefs itemDefs = new ItemDefs(syntaxFile);
 				itemDefs.readSyntaxFile();
 				itemDefs.generateSyntaxFile(data.getHeaderList());

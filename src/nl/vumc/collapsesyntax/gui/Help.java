@@ -157,7 +157,7 @@ class Help extends JPanel implements ListSelectionListener {
 	public static void showHelp(){
 		// check whether a helpwindow already exists
 		if(!helpAlreadyShown){
-			javax.swing.SwingUtilities.invokeLater(() -> createAndShowGUI());
+			javax.swing.SwingUtilities.invokeLater(Help::createAndShowGUI);
 		}
 	}
 

@@ -22,47 +22,59 @@ import nl.vumc.collapsesyntax.shared.FileOperations;
 // C97 --> CRF ID
 // 1 --> Group Repeat
 
+// Item Definitions based on syntaxfile
 public class ItemDefs{
 	public ItemDefs(String syntaxFile){
-//		this.workDir = workDir;
 		this.dataFile = syntaxFile;
 	}
 
+	// get the Type and Width based on the headerList with the CF items
 	private String getTypeAndWidthString(List<String> headerList){
 		ItemDef itemDef;
 		String line="";
+		// for each item in our headerList
 		for(String aHeader:headerList){
+			// get the itemDef
 			itemDef = itemTable.get(aHeader);
+			// retrieve the type and width and add a newline
 			line += itemDef.getTypeAndWidth()+Common.getNewLine();
 		}
 		return Common.removeFinalLineSeparator(line);
 	}
 
+	// get the Labels based on the headerList with the CF items
 	private String getLabelsString(List<String> headerList){
 		ItemDef itemDef;
 		String line="";
+		// for each item in our headerList
 		for(String aHeader:headerList){
+			// get the itemDef
 			itemDef = itemTable.get(aHeader);
+			// retrieve the label and add a newline
 			line += itemDef.getLabel()+Common.getNewLine();
 		}
 		return Common.removeFinalLineSeparator(line);
 	}
 
+	// get the Value Labels based on the headerList with the CF items
 	private String getValueLabelsString(List<String> headerList){
 		ItemDef itemDef;
-		String line="", key, value;
+		String line="";
 		List<String> keys, values;
-
+		// for each item in our headerList
 		for(String aHeader:headerList){
+			// get the itemDef
 			itemDef = itemTable.get(aHeader);
+			// check whether it has a Value Label
 			if(itemDef.hasValueLabel()){
+				// add the headerName and a newline
 				line += aHeader+Common.getNewLine();
+				// retrieve the keys and values for the itemDef
 				keys = itemDef.getKeys();
 				values = itemDef.getValues();
+				// add the keys and values and newlines
 				for(int i=0; i<keys.size(); i++){
-					key = keys.get(i);
-					value = values.get(i);
-					line += key+" "+value+Common.getNewLine();
+					line += keys.get(i)+" "+values.get(i)+Common.getNewLine();
 				}
 				line += "/"+Common.getNewLine();
 			}
@@ -71,10 +83,9 @@ public class ItemDefs{
 		return Common.removeFinalLineSeparator(line);
 	}
 
-	// print the new syntax file 
+	// generate the new syntax file, based on the headerList, which contains our new CF items
 	public void generateSyntaxFile(List<String> headerList){
 		String outFile = FileOperations.generateOutfileName(dataFile);
-//		BufferedWriter bufferedWriter = FileOperations.openFileWriter(workDir+outFile);
 		BufferedWriter bufferedWriter = FileOperations.openFileWriter(outFile);
 		
 		String lines;
@@ -120,7 +131,7 @@ public class ItemDefs{
 		while(!(line=bufferedReader.readLine()).equalsIgnoreCase(".")){
 			splitLine = Common.getCleanSplit(line, " ");
 			
-			// name at at position 0, transform it to the generalName
+			// name at position 0, transform it to the generalName
 			name = splitLine[0];
 			generalName = Common.getGeneralName(name);
 			
@@ -169,7 +180,6 @@ public class ItemDefs{
 	//	'1001' "Anakinra"
 	//	'-1' "Geen informatie"
 	//	/
-
 	private void collapseValueLabels(BufferedReader bufferedReader) throws IOException{
 		String line, name, generalName;
 		String [] splitLine;
@@ -182,7 +192,7 @@ public class ItemDefs{
 			splitLine = Common.getCleanSplit(line, "' \"");
 
 			// if the splitLine has length 1 it's either the headername or a /
-			// a / will give an itemDef = null, but's that's not a problem as it will be overwritten next iteration.
+			// a / will give an itemDef = null, but that's not a problem as it will be overwritten next iteration.
 			if(splitLine.length==1){
 				name = splitLine[0];
 				generalName = Common.getGeneralName(name);
@@ -196,12 +206,17 @@ public class ItemDefs{
 		textAfterValueLabels.add(line);
 	}
 
+	// There was some confusion with respect to the fileName mentioned in the syntax file,
+	// which was still pointing to the original fileName.
+	// This part replaces the original fileName by the new fileName.
     private String replaceDataFileName (String line){
         Matcher matcher = filePattern.matcher(line);
         if(matcher.matches()) {
             // this is something like " = 'd:/temp/somedir/spss.dat'"
             String fileName = matcher.group(1);
+			// add the _new and remove the whatever-follows-the-last-dot
             String newFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "_new";
+			// add the whatever-follows-the-last-dot
             newFileName += fileName.substring(fileName.lastIndexOf("."), fileName.length());
             line = line.replace(fileName, newFileName);
         }
@@ -221,24 +236,31 @@ public class ItemDefs{
 
 		// to ensure we properly replicate the syntax file, break it down to pieces
 		try {
+			// read the first couple of lines, until we encounter "GET DATA"
 			while(!(line=bufferedReader.readLine()).startsWith("GET DATA")){
 				textBeforeTypes.add(line);
 			}
+			// the line with the GET DATA will have the fileName replaced
 			line = replaceDataFileName(line);
 			textBeforeTypes.add(line);
+			// collapse the Types part of the syntax
 			collapseTypes(bufferedReader);
 
+			// add whatever is between the types and the labels part
 			textBetweenTypesAndLabels.add(bufferedReader.readLine());
+			// collapse the labels
 			collapseLabels(bufferedReader);
 
 			// Next lines should be either EXECUTE or VALUE LABELS
 			line=bufferedReader.readLine();
+			// it it's VALUE LABELS, collapse the valueLabels
 			if(line.startsWith("VALUE LABELS")){
 				textBetweenLabelsAndValueLabels.add(line);
 				collapseValueLabels(bufferedReader);
 			}
 			else textAfterValueLabels.add(line);
 
+			// add the remaining text
 			while ((line = bufferedReader.readLine()) != null) {
 				textAfterValueLabels.add(line);
 			}
@@ -260,6 +282,7 @@ public class ItemDefs{
     private final static Pattern filePattern= Pattern.compile(".*FILE(.+)\\s*/DELCASE.*");
 }
 
+// ItemDef is the definition of a single CF item
 class ItemDef{
 	ItemDef(String generalName){
 		this.generalName = generalName;
@@ -287,6 +310,9 @@ class ItemDef{
 		return generalName+" "+dataType+width;
 	}
 
+	// due to the split statement, the key on entrance is something like '1
+	// and the value is something like Ja"
+	// before adding the value we first add the missing ' and "
 	void addValueLabel(String key, String value){
 		key = key+"'";
 		if(!keyList.contains(key)){
@@ -295,10 +321,14 @@ class ItemDef{
 		}
 	}
 
+	// set the variable label
+	// due to the split, the label will be something like myLabel"
+	// hence, we add the "
 	void setLabel(String label){
 		this.label="\""+label;
 	}
 
+	// set the type and width of the item
 	void setTypeAndWidth(String typeAndWidth){
 		// split the type and width
 		Matcher matcher = typeAndWidthPattern.matcher(typeAndWidth);
@@ -330,5 +360,7 @@ class ItemDef{
 	private final List<String> keyList = new LinkedList<>();
 	private final List<String> valueList = new LinkedList<>();
 
+	// one or more non-digits, followed by at least one digit and zero or more characters
+	// pattern will match e.g. ADATE10, F4.1, etc. and the groups will be "ADATE" and "10", "F" and "4.1", ...
 	private final static Pattern typeAndWidthPattern = Pattern.compile("(\\D+)(\\d+.*)");
 }
