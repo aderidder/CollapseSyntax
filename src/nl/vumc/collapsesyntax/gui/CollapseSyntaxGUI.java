@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -39,7 +41,7 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 		// create the uneditable log area with a scroll pane
 		logArea = new JTextArea(30,150);
 		logArea.setEditable(false);
-		logArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+		logArea.setFont(new Font("Courier New", Font.PLAIN, 14));
 		FileOperations.setLogArea(logArea);
 		JScrollPane logScrollPane = new JScrollPane(logArea);
 
@@ -248,26 +250,36 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 		String syntaxFile = syntaxFileTextField.getText().trim();
 		// check whether both the crfVersionFileTextField and the ruleFileTextField exist
 		if(fileExists(dataFile)&&fileExists(syntaxFile)){
-			logArea.append("Running Syntax Collapse..."+newline);
+//			logArea.append("Running Syntax Collapse..."+newline);
 			// ensure the directory variable is set properly 
 			dir = dataFile.substring(0,dataFile.lastIndexOf(fileSeparator));
 			try{
-				// create a Data object, read the file and generate the dataFile
-				Data data = new Data(dataFile);
-				data.readDataFile();
-				data.generateDataFile();
-				
-				logArea.append(newline);
+				class Worker extends SwingWorker<Integer, String>{
+					@Override
+					protected Integer doInBackground() throws Exception {
+						publish("Running Syntax Collapse..."+newline);
+						// create a Data object, read the file and generate the dataFile
+						Data data = new Data(dataFile);
+						data.readDataFile();
+						data.generateDataFile();
+						// create the itemDefs and generate a new syntaxfile based on the new header (with CF items)
+						ItemDefs itemDefs = new ItemDefs(syntaxFile);
+						itemDefs.readSyntaxFile();
+						itemDefs.generateSyntaxFile(data.getHeaderList());
+						publish("Done!"+newline);
+						return 1;
+					}
 
-				// create the itemDefs and generate a new syntaxfile based on the new header (with CF items)
-				ItemDefs itemDefs = new ItemDefs(syntaxFile);
-				itemDefs.readSyntaxFile();
-				itemDefs.generateSyntaxFile(data.getHeaderList());
-				
-				logArea.append("\nFinshed");
-				
+					@Override
+					protected void process(java.util.List< String> chunks) {
+						logArea.append(chunks.stream().collect(Collectors.joining(newline)));
+					}
+				}
+
+				// let the worker do the work to prevent the thread from being blocked
+				new Worker().execute();
 			} catch(Exception e){
-				// show message if not successful
+				// show message if there's an Exception
 				logArea.append(e.toString());
 				JOptionPane.showMessageDialog(this, "The rule translator encountered a problem:"+newline+e.toString(),
 						"There was a problem", JOptionPane.ERROR_MESSAGE);
@@ -290,7 +302,8 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 			"Developer: Sander de Ridder"+newline+
             "WP-lead: Jeroen Beliën"+newline+
             "Tested by: Rinus Voorham (VU University Medical Center), Marinel Cavelaars (The Hyve)"+newline+
-                    "Gerben Rienk Visser (Trial Data Solutions) and Marieke Vianen (University Medical Center Utrecht)"+newline+newline+
+                    "Gerben Rienk Visser (Trial Data Solutions), Jolanda Strubel (The Hyve)"+newline+
+					"and Marieke Vianen (University Medical Center Utrecht)"+newline+newline+
             "This tool is now supported by CTMM TraIT."+newline+
 			"Please contact servicedesk@ctmm-trait.nl for questions and comments"+newline+newline+
             "Program version "+version+newline+newline,
@@ -354,7 +367,13 @@ public class CollapseSyntaxGUI extends JPanel implements ActionListener {
 
 	// main
 	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(CollapseSyntaxGUI::createAndShowGUI);
+		try {
+			// set look and feel to system for proper dpi scaling
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			javax.swing.SwingUtilities.invokeLater(CollapseSyntaxGUI::createAndShowGUI);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	private String dir="";

@@ -243,6 +243,12 @@ public class ItemDefs{
 			// the line with the GET DATA will have the fileName replaced
 			line = replaceDataFileName(line);
 			textBeforeTypes.add(line);
+
+			while (!line.contains("/VARIABLES")){
+				line=bufferedReader.readLine();
+				textBeforeTypes.add(line);
+			}
+
 			// collapse the Types part of the syntax
 			collapseTypes(bufferedReader);
 
@@ -279,7 +285,8 @@ public class ItemDefs{
 	private final List<String> textBetweenLabelsAndValueLabels = new LinkedList<>();
 	private final List<String> textAfterValueLabels = new LinkedList<>();
 	private final Hashtable <String, ItemDef> itemTable = new Hashtable<>();
-    private final static Pattern filePattern= Pattern.compile(".*FILE(.+)\\s*/DELCASE.*");
+//    private final static Pattern filePattern= Pattern.compile(".*FILE(.+)\\s*/DELCASE.*");
+private final static Pattern filePattern= Pattern.compile(".*(\'.+\\.dat\').*");
 }
 
 // ItemDef is the definition of a single CF item

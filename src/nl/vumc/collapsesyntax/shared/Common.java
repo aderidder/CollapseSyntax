@@ -5,6 +5,8 @@
 
 package nl.vumc.collapsesyntax.shared;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Common{
@@ -23,17 +25,29 @@ public class Common{
 	}
 
 	public static String getGeneralName(String [] splitItem){
+		Matcher matcher;
 		String generalItemName = splitItem[0];
 		String curItem;
 		// search for the "C" part, which isn't in a fixed position
 		for(int j=1; j<splitItem.length; j++){
 			curItem = splitItem[j];
+
 			// if we found the C item, set the curItem's name to CF
-			if(curItem.startsWith("C")) curItem = "CF";
+			matcher = crfPattern.matcher(curItem);
+			if(matcher.matches()) curItem = "CF";
+
 			// add curItem to the generalItemName
 			generalItemName+="_"+curItem;
 		}
 		return generalItemName.trim();
+	}
+
+	public static String getGeneralNameExtension(String headerName){
+		Matcher matcher = extensionPattern.matcher(headerName);
+		if(matcher.matches()){
+			return matcher.group(1);
+		}
+		return "NA";
 	}
 
 	// create a stream from the list, collect, joining by newLine
@@ -64,4 +78,6 @@ public class Common{
 	}
 	
 	private final static String newLine = System.getProperty("line.separator");
+	private static final Pattern crfPattern = Pattern.compile("C\\d+");
+	private static final Pattern extensionPattern = Pattern.compile(".*(E\\d+_(\\d+_)?CF(_\\d+)?)");
 }

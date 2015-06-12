@@ -7,8 +7,9 @@ package nl.vumc.collapsesyntax.data;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import nl.vumc.collapsesyntax.shared.Common;
 import nl.vumc.collapsesyntax.shared.FileOperations;
@@ -77,7 +78,7 @@ public class Data{
 		//
 		// The first C therefore more or less defines the structure, unless the first C is incomplete (missing fields or fewer groups), which are added
 		String [] splitItem;
-		String prevGeneralItemName="", generalItemName;
+		String generalItemName;
 
 		// Split the header by tab
 		splitHeader = line.split("\t");
@@ -100,11 +101,18 @@ public class Data{
 			// reason for this, is that if e.g. Event 1 has two repeats of a group and Event 2 has three repeats,
 			// the third repeat's generalName will now follow the second repeat's generalName in the headerList
             if (!headerList.contains(generalItemName)) {
-                int index = headerList.indexOf(prevGeneralItemName);
-                headerList.add(index + 1, generalItemName.trim());
+				String extension = Common.getGeneralNameExtension(generalItemName);
+//				if(!lastItemMap.containsKey(generalItemName)){
+				if(!lastItemMap.containsKey(extension)){
+					lastItemMap.put(extension, generalItemName);
+					headerList.add(generalItemName);
+				} else {
+					String lastItem = lastItemMap.get(extension);
+					int index = headerList.indexOf(lastItem);
+					headerList.add(index + 1, generalItemName.trim());
+					lastItemMap.put(extension, generalItemName);
+				}
             }
-
-            prevGeneralItemName = generalItemName;
         }
 	}
 
@@ -152,4 +160,5 @@ public class Data{
 	private final List<String> headerList = new LinkedList<>();
 	private final List<String[]> dataList = new LinkedList<>();
 	private final String dataFile;
+	private final Map<String, String> lastItemMap = new HashMap<>();
 }

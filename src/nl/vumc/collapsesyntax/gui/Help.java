@@ -115,8 +115,6 @@ class Help extends JPanel implements ListSelectionListener {
 		//Display the window.
 		frame.pack();
 		frame.setVisible(true);
-
-		//		System.out.println(nl.vumc.collapsesyntax.gui.Help.class.getResource("/").getPath());
 	}
 
 	// show help, based on the selected index

@@ -9,6 +9,21 @@ package nl.vumc.collapsesyntax.gui;
 import nl.vumc.collapsesyntax.shared.FileOperations;
 
 class HelpTexts {
+    static String getCSS(){
+        String cssString=
+            "<style>" +
+                "table, th, td {" +
+                "   border: 1px solid black;" +
+                "   border-collapse: collapse;" +
+                "}" +
+                ".quote{" +
+                "   margin: 0px 25px;" +
+                "   font-style: italic;" +
+                "   font-size: small;" +
+                "}" +
+                "</style>";
+        return cssString;
+    }
 
     static String getText0(){
         String file = FileOperations.getURLString("preCollapse.jpg");
